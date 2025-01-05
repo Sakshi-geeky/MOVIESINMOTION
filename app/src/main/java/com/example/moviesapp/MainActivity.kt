@@ -48,6 +48,11 @@ import com.example.moviesapp.ui.theme.MoviesAppTheme
 import com.example.moviesapp.ui.viewModel.MovieViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.material3.CardDefaults
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -56,14 +61,29 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MoviesAppTheme {
-                HomeScreen()
+                MyAppNavGraph()
             }
         }
     }
 }
 
 @Composable
-fun HomeScreen(moviesViewModel: MovieViewModel = hiltViewModel()) {
+fun MyAppNavGraph() {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "mainScreen") {
+        composable("mainScreen") {
+            HomeScreen(navcontroller=navController)
+        }
+
+        composable("detailScreen") {
+            MovieDetailScreen(onBackPressed = { navController.popBackStack() })
+        }
+
+    }
+}
+@Composable
+fun HomeScreen(moviesViewModel: MovieViewModel = hiltViewModel(),navcontroller: NavHostController) {
 
     val trendingMovies = moviesViewModel.trendingMoviesList.observeAsState()
 
@@ -89,7 +109,7 @@ fun HomeScreen(moviesViewModel: MovieViewModel = hiltViewModel()) {
         ) {
             items(trendingMovies.value?.results?.size ?: 0) { movie ->
                 MovieItem(movie = trendingMovies.value?.results?.get(movie) ?: Movie()){
-
+                navcontroller.navigate("detailScreen")
                 }
             }
         }
@@ -199,6 +219,46 @@ fun MovieGridContent(category: MovieCategory, movieViewModel: MovieViewModel) {
             MovieItem(movie = movies?.get(movie) ?: Movie()) {
             }
         }
+    }
+}
+
+@Composable
+fun MovieDetailScreen(onBackPressed: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.DarkGray)
+            .padding(16.dp)
+    ) {
+        Image(
+            painter = rememberImagePainter(
+                data = "https://image.tmdb.org/t/p/w500${""}",
+                builder = {
+                    scale(Scale.FILL)
+                }
+            ),
+            contentDescription = "Movie Poster",
+            modifier = Modifier
+                .height(300.dp)
+                .fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Barbie",
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color.White
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Barbie1",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.LightGray
+        )
     }
 }
 
