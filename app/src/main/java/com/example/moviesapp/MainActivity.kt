@@ -115,7 +115,6 @@ fun MyAppNavGraph() {
             val movieId = it.arguments?.getString("MovieId")
             MovieDetailScreen(onBackPressed = { navController.popBackStack() }, movieId = movieId,
                 onPlayVideo = { videoUrl ->
-                    // Encode the URL before navigation
                     val encodedUrl = Uri.encode(videoUrl)
                     navController.navigate("videoPlayer/$encodedUrl")
                 })
@@ -159,7 +158,6 @@ fun YouTubePlayer(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Back button
         IconButton(
             onClick = onBackPressed,
             modifier = Modifier
@@ -170,67 +168,6 @@ fun YouTubePlayer(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
                 tint = Color.White
-            )
-        }
-    }
-}
-@OptIn(UnstableApi::class)
-@Composable
-fun FullScreenVideoPlayer(
-    videoUrl: String,
-    onBackPressed: () -> Unit
-) {
-    val context = LocalContext.current
-    var isPlaying by remember { mutableStateOf(true) }
-    var showControls by remember { mutableStateOf(false) }
-
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
-            setMediaItem(mediaItem)
-            playWhenReady = true
-            prepare()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            exoPlayer.release()
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        AndroidView(
-            factory = { context ->
-                PlayerView(context).apply {
-                    player = exoPlayer
-                    layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-                    useController = true
-                    controllerShowTimeoutMs = 2000 // Controls hide after 2 seconds
-                    controllerHideOnTouch = true
-                    setShowNextButton(false)
-                    setShowPreviousButton(false)
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Back button overlay
-        IconButton(
-            onClick = onBackPressed,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
             )
         }
     }
@@ -256,7 +193,6 @@ fun HomeScreen(moviesViewModel: MovieViewModel = hiltViewModel(),navcontroller: 
             style = MaterialTheme.typography.titleLarge.copy(color = Color.White),
         )
 
-//        Spacer(modifier = Modifier.height(16.dp))
 
         LazyRow(
             contentPadding = PaddingValues(vertical = 8.dp)
@@ -430,11 +366,9 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
                 style = MaterialTheme.typography.titleMedium
             )
 
-            // Empty spacer for alignment
             Spacer(modifier = Modifier.size(24.dp))
         }
-        // Top section with banner image and header
-        Box(modifier = Modifier.height(240.dp)) { // Reduced total height
+        Box(modifier = Modifier.height(240.dp)) {
             if (isPlaying) {
                 VideoPlayer(
                     videoUrl = "",
@@ -442,7 +376,6 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
                     onFullScreenToggle = { isFullScreen = !isFullScreen }
                 )
             } else {
-                // Banner Image
                 Image(
                     painter = rememberImagePainter(
                         data = "https://image.tmdb.org/t/p/w500${movieDetails.value?.backdrop_path}",
@@ -483,42 +416,12 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
                 }
             }
 
-            // Header with back button and title
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(horizontal = 16.dp, vertical = 24.dp), // Increased top padding
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                IconButton(
-//                    onClick = onBackPressed,
-//                    modifier = Modifier.size(24.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.ArrowBack,
-//                        contentDescription = "Back",
-//                        tint = Color.White
-//                    )
-//                }
-//
-//                Text(
-//                    text = "Details",
-//                    color = Color.White,
-//                    style = MaterialTheme.typography.titleMedium
-//                )
-//
-//                // Empty spacer for alignment
-//                Spacer(modifier = Modifier.size(24.dp))
-//            }
-
-            // Overlapping movie poster
             Card(
                 modifier = Modifier
                     .padding(start = 16.dp)
-                    .offset(y = 140.dp) // Adjusted offset
-                    .width(100.dp)  // Reduced width
-                    .height(140.dp), // Reduced height
+                    .offset(y = 140.dp)
+                    .width(100.dp)
+                    .height(140.dp),
                 shape = RoundedCornerShape(8.dp),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
@@ -536,7 +439,6 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
             }
         }
 
-        // Movie info section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -558,7 +460,6 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Movie metadata with icons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -624,7 +525,6 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tabs
         TabRow(
             selectedTabIndex = selectedTab,
             modifier = Modifier
@@ -656,7 +556,6 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
             }
         }
 
-        // Tab content in a scrollable column
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -710,7 +609,6 @@ fun CastMemberItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Circular image container
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -718,12 +616,7 @@ fun CastMemberItem(
                 .background(Color.DarkGray)
         ) {
             if (imageUrl != null) {
-//                AsyncImage(
-//                    model = imageUrl,
-//                    contentDescription = "Actor Image",
-//                    modifier = Modifier.fillMaxSize(),
-//                    contentScale = ContentScale.Crop
-//                )
+
                 Image(
                     painter = rememberImagePainter(
                         data = "https://image.tmdb.org/t/p/w500${imageUrl}",
@@ -749,7 +642,6 @@ fun CastMemberItem(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Actor name
         Text(
             text = name,
             style = MaterialTheme.typography.bodyMedium,

@@ -19,9 +19,9 @@ object HiltRetrofitObject {
     @Singleton
     fun buildRetrofit(): Retrofit {
         val okHttpClient = OkHttpClient.Builder()
-            .addInterceptor(ApiKeyInterceptor())  // Add the API Key interceptor here
-            .connectTimeout(30, TimeUnit.SECONDS)  // Optional: Setting timeout
-            .readTimeout(30, TimeUnit.SECONDS)     // Optional: Setting timeout
+            .addInterceptor(ApiKeyInterceptor())
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
             .build()
 
         return Retrofit.Builder()

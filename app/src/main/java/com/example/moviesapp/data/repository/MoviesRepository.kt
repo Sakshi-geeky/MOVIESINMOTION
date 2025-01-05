@@ -12,7 +12,7 @@ import retrofit2.Response
 import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
-    private val movieApiService: NetworkService  // Assuming this is the interface name from Retrofit
+    private val movieApiService: NetworkService
 ) {
 
     suspend fun getTrendingMovies(timeWindow: String): com.example.moviesapp.data.model.Result<TrendingMoviesResponse> {
