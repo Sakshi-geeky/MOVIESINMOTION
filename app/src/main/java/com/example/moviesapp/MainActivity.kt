@@ -74,6 +74,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
@@ -84,6 +85,9 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.example.moviesapp.data.model.CastMember
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -116,44 +120,17 @@ fun MyAppNavGraph() {
                     navController.navigate("videoPlayer/$encodedUrl")
                 })
         }
-        composable(
-            "videoPlayer/{videoUrl}"
-        ) {
-            val encodedUrl = it.arguments?.getString("videoUrl")
-            // Decode the URL before using it
-            val decodedUrl = Uri.decode(encodedUrl)
-            FullScreenVideoPlayer(
-                videoUrl = decodedUrl,
-                onBackPressed = { navController.popBackStack() }
-            )
+        composable("videoPlayer/{videoId}") { backStackEntry ->
+            val videoId = backStackEntry.arguments?.getString("videoId")
+            if (videoId != null) {
+                YouTubePlayer(videoId = videoId, onBackPressed = { navController.popBackStack() })
+            }
         }
     }
 }
-@OptIn(UnstableApi::class)
 @Composable
-fun FullScreenVideoPlayer(
-    videoUrl: String,
-    onBackPressed: () -> Unit
-) {
-    val context = LocalContext.current
-    var isPlaying by remember { mutableStateOf(true) }
-    var showControls by remember { mutableStateOf(false) }
-
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
-            setMediaItem(mediaItem)
-            playWhenReady = true
-            prepare()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            exoPlayer.release()
-        }
-    }
-
+fun YouTubePlayer(videoId: String, onBackPressed: () -> Unit) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -161,20 +138,17 @@ fun FullScreenVideoPlayer(
     ) {
         AndroidView(
             factory = { context ->
-                PlayerView(context).apply {
-                    player = exoPlayer
-                    layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-                    useController = true
-                    controllerShowTimeoutMs = 2000 // Controls hide after 2 seconds
-                    controllerHideOnTouch = true
-                    setShowNextButton(false)
-                    setShowPreviousButton(false)
+                YouTubePlayerView(context).apply {
+                    lifecycle.addObserver(this)
+                    addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+                        override fun onReady(youTubePlayer: YouTubePlayer) {
+                            youTubePlayer.loadVideo(videoId, 0f)
+                        }
+                    })
                 }
             },
             modifier = Modifier.fillMaxSize()
         )
-
-        // Back button overlay
         IconButton(
             onClick = onBackPressed,
             modifier = Modifier
@@ -184,12 +158,72 @@ fun FullScreenVideoPlayer(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
+                tint = Color.White
             )
         }
     }
 }
+//@OptIn(UnstableApi::class)
+//@Composable
+//fun FullScreenVideoPlayer(
+//    videoUrl: String,
+//    onBackPressed: () -> Unit
+//) {
+//    val context = LocalContext.current
+//    var isPlaying by remember { mutableStateOf(true) }
+//    var showControls by remember { mutableStateOf(false) }
+//
+//    val exoPlayer = remember {
+//        ExoPlayer.Builder(context).build().apply {
+//            val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+//            setMediaItem(mediaItem)
+//            playWhenReady = true
+//            prepare()
+//        }
+//    }
+//
+//    DisposableEffect(Unit) {
+//        onDispose {
+//            exoPlayer.release()
+//        }
+//    }
+//
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(Color.Black)
+//    ) {
+//        AndroidView(
+//            factory = { context ->
+//                PlayerView(context).apply {
+//                    player = exoPlayer
+//                    layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+//                    useController = true
+//                    controllerShowTimeoutMs = 2000 // Controls hide after 2 seconds
+//                    controllerHideOnTouch = true
+//                    setShowNextButton(false)
+//                    setShowPreviousButton(false)
+//                }
+//            },
+//            modifier = Modifier.fillMaxSize()
+//        )
+//
+//        // Back button overlay
+//        IconButton(
+//            onClick = onBackPressed,
+//            modifier = Modifier
+//                .align(Alignment.TopStart)
+//                .padding(16.dp)
+//        ) {
+//            Icon(
+//                imageVector = Icons.Default.ArrowBack,
+//                contentDescription = "Back",
+//                tint = Color.White,
+//                modifier = Modifier.size(32.dp)
+//            )
+//        }
+//    }
+//}
 
 @Composable
 fun HomeScreen(moviesViewModel: MovieViewModel = hiltViewModel(),navcontroller: NavHostController) {
@@ -348,10 +382,8 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
     val reviews = moviesViewModel.reviews.observeAsState()
     val castDetails = moviesViewModel.castDetails.observeAsState()
     val trailers = moviesViewModel.trailers.observeAsState()
-    val trailerUrl = remember(trailers.value) {
-        trailers.value?.results?.firstOrNull()?.let { trailer ->
-            "https://www.youtube.com/watch?v=${trailer.key}"
-        }
+    val videoId = remember(trailers.value) {
+        trailers.value?.results?.firstOrNull()?.key
     }
     var isPlaying by remember { mutableStateOf(false) }
     var isFullScreen by remember { mutableStateOf(false) }
@@ -364,223 +396,217 @@ fun MovieDetailScreen(moviesViewModel: MovieViewModel = hiltViewModel(),onBackPr
     ) {
         // Top section with banner image and header
         Box(modifier = Modifier.height(240.dp)) { // Reduced total height
-            if (isPlaying && trailerUrl != null) {
-                VideoPlayer(
-                    videoUrl = trailerUrl,
-                    isFullScreen = isFullScreen,
-                    onFullScreenToggle = { isFullScreen = !isFullScreen }
-                )
-            } else {
-                // Banner Image
-                Image(
-                    painter = rememberImagePainter(
-                        data = "https://image.tmdb.org/t/p/w500${movieDetails.value?.backdrop_path}",
-                        builder = {
-                            scale(Scale.FILL)
-                        }
-                    ),
-                    contentDescription = "Movie Banner",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)// Reduced banner height
-                        .clickable {
-                            trailerUrl?.let { url ->
-                                onPlayVideo(url)}
-                        },
-
-                    contentScale = ContentScale.Crop
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clickable {
-                            trailerUrl?.let { url ->
-                                onPlayVideo(url)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (trailerUrl != null) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play Trailer",
-                            tint = Color.White,
-                            modifier = Modifier.size(48.dp)
-                        )
+            // Banner Image
+            Image(
+                painter = rememberImagePainter(
+                    data = "https://image.tmdb.org/t/p/w500${movieDetails.value?.backdrop_path}",
+                    builder = {
+                        scale(Scale.FILL)
                     }
-                }
-            }
-
-            // Header with back button and title
-            Row(
+                ),
+                contentDescription = "Movie Banner",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 24.dp), // Increased top padding
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBackPressed,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White
-                    )
-                }
-
-                Text(
-                    text = "Details",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                // Empty spacer for alignment
-                Spacer(modifier = Modifier.size(24.dp))
-            }
-
-            // Overlapping movie poster
-            Card(
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .offset(y = 140.dp) // Adjusted offset
-                    .width(100.dp)  // Reduced width
-                    .height(140.dp), // Reduced height
-                shape = RoundedCornerShape(8.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
-            ) {
-                Image(
-                    painter = rememberImagePainter(
-                        data = "https://image.tmdb.org/t/p/w500${movieDetails.value?.poster_path}",
-                        builder = {
-                            scale(Scale.FILL)
+                    .height(200.dp)// Reduced banner height
+                    .clickable {
+                        videoId?.let { id ->
+                            onPlayVideo(id)
                         }
-                    ),
-                    contentDescription = "Movie Poster",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    },
+
+                contentScale = ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clickable {
+                        videoId?.let { id ->
+                            onPlayVideo(id)
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play Trailer",
+                    tint = Color.White,
+                    modifier = Modifier.size(48.dp)
                 )
             }
         }
 
-        // Movie info section
-        Column(
+
+        // Header with back button and title
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 130.dp, end = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp), // Increased top padding
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = movieDetails.value?.title ?: "",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
-            )
+            IconButton(
+                onClick = onBackPressed,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
 
             Text(
+                text = "Details",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            // Empty spacer for alignment
+            Spacer(modifier = Modifier.size(24.dp))
+        }
+
+        // Overlapping movie poster
+        Card(
+            modifier = Modifier
+                .padding(start = 16.dp)
+                .offset(y = 140.dp) // Adjusted offset
+                .width(100.dp)  // Reduced width
+                .height(140.dp), // Reduced height
+            shape = RoundedCornerShape(8.dp),
+            elevation = CardDefaults.cardElevation(8.dp)
+        ) {
+            Image(
+                painter = rememberImagePainter(
+                    data = "https://image.tmdb.org/t/p/w500${movieDetails.value?.poster_path}",
+                    builder = {
+                        scale(Scale.FILL)
+                    }
+                ),
+                contentDescription = "Movie Poster",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
+
+    // Movie info section
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 130.dp, end = 16.dp)
+    ) {
+        Text(
+            text = movieDetails.value?.title ?: "",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White
+        )
+
+        Text(
+            text = movieDetails.value?.release_date ?: "",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Movie metadata with icons
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = Icons.Default.DateRange,
+                contentDescription = "Year",
+                tint = Color.LightGray,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
                 text = movieDetails.value?.release_date ?: "",
+                color = Color.LightGray,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Movie metadata with icons
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Year",
-                    tint = Color.LightGray,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = movieDetails.value?.release_date ?: "",
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AccessTime,
-                    contentDescription = "Duration",
-                    tint = Color.LightGray,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = movieDetails.value?.runtime.toString() ?: "",
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LocalMovies,
-                    contentDescription = "Genre",
-                    tint = Color.LightGray,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = movieDetails.value?.genres?.joinToString(", ") { it.name } ?: "",
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.AccessTime,
+                contentDescription = "Duration",
+                tint = Color.LightGray,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = movieDetails.value?.runtime.toString() ?: "",
+                color = Color.LightGray,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
 
-        // Tabs
-        TabRow(
-            selectedTabIndex = selectedTab,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            containerColor = Color.Transparent,
-            contentColor = Color.White,
-            indicator = { tabPositions ->
-                Box(
-                    modifier = Modifier
-                        .tabIndicatorOffset(tabPositions[selectedTab])
-                        .height(2.dp)
-                        .background(Color.White)
-                )
-            }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f)
         ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (selectedTab == index) Color.White else Color.Gray
-                        )
-                    }
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.LocalMovies,
+                contentDescription = "Genre",
+                tint = Color.LightGray,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = movieDetails.value?.genres?.joinToString(", ") { it.name } ?: "",
+                color = Color.LightGray,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Tabs
+    TabRow(
+        selectedTabIndex = selectedTab,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        containerColor = Color.Transparent,
+        contentColor = Color.White,
+        indicator = { tabPositions ->
+            Box(
+                modifier = Modifier
+                    .tabIndicatorOffset(tabPositions[selectedTab])
+                    .height(2.dp)
+                    .background(Color.White)
+            )
+        }
+    ) {
+        tabs.forEachIndexed { index, title ->
+            Tab(
+                selected = selectedTab == index,
+                onClick = { selectedTab = index },
+                text = {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (selectedTab == index) Color.White else Color.Gray
+                    )
+                }
+            )
         }
 
         // Tab content in a scrollable column
