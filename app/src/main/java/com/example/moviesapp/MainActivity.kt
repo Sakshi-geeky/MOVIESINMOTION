@@ -66,6 +66,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.LocalMovies
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -244,9 +246,10 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .padding(top = 16.dp) // Added top padding for the whole screen
     ) {
         // Top section with banner image and header
-        Box(modifier = Modifier.height(300.dp)) {
+        Box(modifier = Modifier.height(240.dp)) { // Reduced total height
             // Banner Image
             Image(
                 painter = rememberImagePainter(
@@ -258,7 +261,7 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
                 contentDescription = "Movie Banner",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp),
+                    .height(200.dp), // Reduced banner height
                 contentScale = ContentScale.Crop
             )
 
@@ -266,7 +269,7 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 24.dp), // Increased top padding
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -294,10 +297,10 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
             // Overlapping movie poster
             Card(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .offset(y = 180.dp)
-                    .width(120.dp)
-                    .height(180.dp),
+                    .padding(start = 16.dp)
+                    .offset(y = 140.dp) // Adjusted offset
+                    .width(100.dp)  // Reduced width
+                    .height(140.dp), // Reduced height
                 shape = RoundedCornerShape(8.dp),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
@@ -319,39 +322,40 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 150.dp, end = 16.dp, top = 8.dp)
+                .padding(start = 130.dp, end = 16.dp)
         ) {
             Text(
                 text = "Movie Title",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = Color.White
             )
 
             Text(
                 text = "Date - Genres - Duration",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Movie metadata with icons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
             ) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = "Year",
                     tint = Color.LightGray,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Text(
                     text = "Year",
@@ -362,13 +366,14 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
             }
 
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Home,
+                    imageVector = Icons.Default.AccessTime,
                     contentDescription = "Duration",
                     tint = Color.LightGray,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Text(
                     text = "00 Minutes",
@@ -379,13 +384,14 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
             }
 
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = Icons.Default.LocalMovies,
                     contentDescription = "Genre",
                     tint = Color.LightGray,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Text(
                     text = "Action",
@@ -396,18 +402,22 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Tabs
         TabRow(
             selectedTabIndex = selectedTab,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             containerColor = Color.Transparent,
             contentColor = Color.White,
             indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
-                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                    color = Color.White
+                Box(
+                    modifier = Modifier
+                        .tabIndicatorOffset(tabPositions[selectedTab])
+                        .height(2.dp)
+                        .background(Color.White)
                 )
             }
         ) {
@@ -418,17 +428,24 @@ fun MovieDetailScreen(onBackPressed: () -> Unit) {
                     text = {
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (selectedTab == index) Color.White else Color.Gray
                         )
                     }
                 )
             }
         }
 
-        // Tab content
-        when (selectedTab) {
-            0 -> AboutMovieTab()
-            1 -> CastTab()
+        // Tab content in a scrollable column
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            when (selectedTab) {
+                0 -> AboutMovieTab()
+                1 -> CastTab()
+            }
         }
     }
 }
@@ -438,23 +455,23 @@ fun AboutMovieTab() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
             text = "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
+            color = Color.Gray,
+            lineHeight = 20.sp
         )
     }
 }
 
 @Composable
 fun CastTab() {
-    // Implement cast tab content here
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
             text = "Cast information will go here",
@@ -463,7 +480,6 @@ fun CastTab() {
         )
     }
 }
-
 enum class MovieCategory(val title: String) {
     NowPlaying("Now Playing"),
     Upcoming("Upcoming"),
