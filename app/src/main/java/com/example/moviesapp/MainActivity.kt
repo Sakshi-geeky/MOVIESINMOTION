@@ -8,18 +8,27 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -48,6 +57,10 @@ import com.example.moviesapp.ui.theme.MoviesAppTheme
 import com.example.moviesapp.ui.viewModel.MovieViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -224,40 +237,229 @@ fun MovieGridContent(category: MovieCategory, movieViewModel: MovieViewModel) {
 
 @Composable
 fun MovieDetailScreen(onBackPressed: () -> Unit) {
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("About Movie", "Cast")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.DarkGray)
+            .background(Color.Black)
+    ) {
+        // Top section with banner image and header
+        Box(modifier = Modifier.height(300.dp)) {
+            // Banner Image
+            Image(
+                painter = rememberImagePainter(
+                    data = "https://image.tmdb.org/t/p/w500${""}",
+                    builder = {
+                        scale(Scale.FILL)
+                    }
+                ),
+                contentDescription = "Movie Banner",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp),
+                contentScale = ContentScale.Crop
+            )
+
+            // Header with back button and title
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = onBackPressed,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+
+                Text(
+                    text = "Details",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                // Empty spacer for alignment
+                Spacer(modifier = Modifier.size(24.dp))
+            }
+
+            // Overlapping movie poster
+            Card(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .offset(y = 180.dp)
+                    .width(120.dp)
+                    .height(180.dp),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Image(
+                    painter = rememberImagePainter(
+                        data = "https://image.tmdb.org/t/p/w500${""}",
+                        builder = {
+                            scale(Scale.FILL)
+                        }
+                    ),
+                    contentDescription = "Movie Poster",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+
+        // Movie info section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 150.dp, end = 16.dp, top = 8.dp)
+        ) {
+            Text(
+                text = "Movie Title",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White
+            )
+
+            Text(
+                text = "Date - Genres - Duration",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Movie metadata with icons
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = "Year",
+                    tint = Color.LightGray,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Year",
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "Duration",
+                    tint = Color.LightGray,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "00 Minutes",
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Genre",
+                    tint = Color.LightGray,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Action",
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Tabs
+        TabRow(
+            selectedTabIndex = selectedTab,
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = Color.Transparent,
+            contentColor = Color.White,
+            indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                    color = Color.White
+                )
+            }
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                )
+            }
+        }
+
+        // Tab content
+        when (selectedTab) {
+            0 -> AboutMovieTab()
+            1 -> CastTab()
+        }
+    }
+}
+
+@Composable
+fun AboutMovieTab() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(16.dp)
     ) {
-        Image(
-            painter = rememberImagePainter(
-                data = "https://image.tmdb.org/t/p/w500${""}",
-                builder = {
-                    scale(Scale.FILL)
-                }
-            ),
-            contentDescription = "Movie Poster",
-            modifier = Modifier
-                .height(300.dp)
-                .fillMaxWidth(),
-            contentScale = ContentScale.Crop
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Text(
-            text = "Barbie",
-            style = MaterialTheme.typography.headlineMedium,
-            color = Color.White
+            text = "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(8.dp))
-
+@Composable
+fun CastTab() {
+    // Implement cast tab content here
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
         Text(
-            text = "Barbie1",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.LightGray
+            text = "Cast information will go here",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
         )
     }
 }
