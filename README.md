@@ -155,3 +155,6 @@ The app uses TMDB API for fetching movie data:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details
+
+SS OF THE APP
+
