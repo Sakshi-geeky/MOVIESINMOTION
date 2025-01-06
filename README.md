@@ -158,3 +158,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 SS OF THE APP
 
+![WhatsApp Image 2025-01-06 at 16 06 46](https://github.com/user-attachments/assets/d061b4a3-9e3b-4f7f-aa01-c6df768ecf5f)
+![WhatsApp Image 2025-01-06 at 16 06 46(2)](https://github.com/user-attachments/assets/15794121-3961-48e0-8cac-d56cb2b5f449)
+![WhatsApp Image 2025-01-06 at 16 06 46(4)](https://github.com/user-attachments/assets/777a3464-fdb9-4aa8-af93-7fda972080d0)
+
+
+[Uploading WhatsApp Video 2025-01-06 at 16.02.08.zip…]()
+
